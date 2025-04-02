@@ -2,9 +2,10 @@ use serde::{Serialize, Deserialize};
 use jsonwebtoken::{encode , decode , Header , Validation , EncodingKey , DecodingKey , errors::Result , TokenData};
 use std::time::{SystemTime , UNIX_EPOCH};
 use std::fs;
-use actix_web::{web  , App , HttpServer , HttpResponse , Responder , post};
-use std::io;
+use actix_web::{web , HttpServer , HttpResponse , Responder , post};
 use rand::Rng;
+use bcrypt::{hash, DEFAULT_COST};
+
 
 
 #[derive(Debug , Clone , Serialize , Deserialize)]
@@ -22,30 +23,11 @@ struct Claims {
 }
 
 #[derive(Deserialize)]
-struct LoginRequest {
-    username : String,
-    password : String,
+pub struct LoginRequest {
+    pub username : String,
+    pub password : String,
 }
 
-pub async fn run(choice : u8) {
-    match choice {
-        1  => {add_device();},
-        2  => {
-            start_server().await;
-
-        }, // run equence here later 
-        _ => {} //wont have to choice anyway 
-    }
-}
-
-async fn start_server() -> std::io::Result<()>{
-    HttpServer::new(|| {
-        App::new()
-            .service(login)
-    }).bind("192.168.0.1.29:80")?
-    .run()
-    .await
-}
 
 fn create_jwt(username : &str , secret : &[u8]) -> Result<String> {
     let exp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + 3600; 
@@ -61,9 +43,8 @@ fn verify_jwt(token : &str , secret : &[u8] ) -> Result<TokenData<Claims>> {
 }
 
 fn load_credentials() -> Vec<User> {
-    let file = fs::read_to_string("credentials.json").expect("Unable to read file");
-    let users: Vec<User> = serde_json::from_str(&file).expect("Unable to parse JSON");
-    users
+    let file = fs::read_to_string("credentials.json").unwrap_or_else(|_| "[]".to_string());
+    serde_json::from_str(&file).unwrap_or_else(|_| vec![])
 }
 
 fn save_credentials(users: &Vec<User>) {
@@ -75,33 +56,23 @@ fn save_credentials(users: &Vec<User>) {
     fs::write("credentials.json", json).expect("Unable to write file");
 }
 
-fn add_device() {
-    let users = load_credentials();
-    let mut username = String::new();
-    let mut password = String::new();
-    println!("Enter username: ");
-    io::stdin().read_line(&mut username).expect("Failed to read line");
-    println!("Enter password: ");
-    io::stdin().read_line(&mut password).expect("Failed to read line");
+#[post("/register")]
+pub async fn register(register_info : web::Json<LoginRequest>) -> impl Responder {
+    let mut users = load_credentials(); 
     let id = rand::rng().random_range(1..=130);
-    username = username.trim().to_string();
-    password = password.trim().to_string();
-    if username.is_empty() || password.is_empty() {
-        println!("Username and password cannot be empty");
-        return;
-    }
     let new_user = User {
-        id: id,
-        username: username,
-        password: password,
+        id,
+        username: register_info.username.clone(),
+        password: register_info.password.clone(),
     };
-    let mut users = users;
     users.push(new_user);
     save_credentials(&users);
+
+    HttpResponse::Ok().body("User registered successfully")
 }
 
 #[post("/login")]
-async fn login(login_info : web::Json<LoginRequest>) -> impl Responder {
+pub async fn login(login_info : web::Json<LoginRequest>) -> impl Responder {
     let users = load_credentials();
     let mut result = HttpResponse::Unauthorized().body("Invalid credentials");
     for credentials in users.iter() {
