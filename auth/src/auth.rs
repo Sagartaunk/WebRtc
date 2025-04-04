@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use jsonwebtoken::{encode , decode , Header , Validation , EncodingKey , DecodingKey , errors::Result , TokenData};
 use std::time::{SystemTime , UNIX_EPOCH};
 use std::fs;
-use actix_web::{web , HttpServer , HttpResponse , Responder , post};
+use actix_web::{web , HttpResponse , Responder , post};
 use rand::Rng;
 use bcrypt::{hash, DEFAULT_COST};
 
@@ -23,11 +23,40 @@ struct Claims {
 }
 
 #[derive(Deserialize)]
+pub struct PairRequest {
+    pub key : String,
+    pub username : String , 
+    pub password : String
+}
+
+#[derive(Deserialize)]
 pub struct LoginRequest {
     pub username : String,
     pub password : String,
 }
 
+pub fn load_key() -> String{
+    let key  = match fs::read_to_string("Key.txt"){
+        Ok(key) => key ,
+        Err(_) => {
+            let key = key_gen();
+            key
+        }
+    };
+    key
+}
+pub fn key_gen() -> String{
+    let key = rand::rng().random_range(1000..9999);
+    let key = key.to_string();
+    let _ = key_save(key.clone());
+    key
+}
+fn key_save(key : String){
+    let _ = match fs::write("Key.txt" , key.clone()) {
+        Ok(_) => {},
+        Err(_) => {key_save(key);}
+    };
+}
 
 fn create_jwt(username : &str , secret : &[u8]) -> Result<String> {
     let exp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + 3600; 
@@ -57,18 +86,23 @@ fn save_credentials(users: &Vec<User>) {
 }
 
 #[post("/register")]
-pub async fn register(register_info : web::Json<LoginRequest>) -> impl Responder {
-    let mut users = load_credentials(); 
-    let id = rand::rng().random_range(1..=130);
-    let new_user = User {
+pub async fn register(register_info : web::Json<PairRequest>) -> impl Responder {
+    let key = load_key();
+    let mut responce = HttpResponse::Unauthorized().body("Invalid pairing Key");
+    if key == register_info.key.clone() {
+        let mut users = load_credentials(); 
+        let id = rand::rng().random_range(1..=130);
+        let new_user = User {
         id,
         username: register_info.username.clone(),
         password: register_info.password.clone(),
     };
     users.push(new_user);
     save_credentials(&users);
-
-    HttpResponse::Ok().body("User registered successfully")
+    responce = HttpResponse::Ok().body("User registered successfully");
+    };
+    let _ = key_gen();
+    responce  
 }
 
 #[post("/login")]
