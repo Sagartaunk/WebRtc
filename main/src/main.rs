@@ -2,7 +2,7 @@ use auth::auth::{login , register ,  key_gen};
 use actix_web::{App, HttpRequest, HttpServer, middleware, web};
 use env_logger;
 use log;
-
+use local_ip_address::local_ip;
 
 
 
@@ -10,15 +10,16 @@ use log;
 async fn main() -> std::io::Result<()> {
     key_gen();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    log::info!("starting HTTP server at http://localhost:8080");
-    
+    let device_ip = local_ip().unwrap();
+    let bind_address = format!("{}:80", device_ip);
+    log::info!("Starting at http://{}", bind_address);
     HttpServer::new(|| {
         App::new()
             .wrap(middleware::Logger::default())
             .service(login)
             .service(register)
             .service(web::resource("/index.html").to(|| async { "Working?" })) // Remove when testing done
-    }).bind("192.168.1.10:8080")?
+    }).bind(bind_address)?
     .run()
     .await
 }
