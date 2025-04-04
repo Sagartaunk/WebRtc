@@ -4,7 +4,7 @@ use std::time::{SystemTime , UNIX_EPOCH};
 use std::fs;
 use actix_web::{web , HttpResponse , Responder , post};
 use rand::Rng;
-use bcrypt::{hash, DEFAULT_COST};
+use bcrypt::{hash, DEFAULT_COST , verify};
 
 
 
@@ -67,9 +67,9 @@ fn create_jwt(username : &str , secret : &[u8]) -> Result<String> {
     encode(&Header::default() , &claims , &EncodingKey::from_secret(secret) )
 }
 
-fn verify_jwt(token : &str , secret : &[u8] ) -> Result<TokenData<Claims>> {
-    decode::<Claims>(token , &DecodingKey::from_secret(secret) , &Validation::default())
-}
+//fn verify_jwt(token : &str , secret : &[u8] ) -> Result<TokenData<Claims>> {
+    //decode::<Claims>(token , &DecodingKey::from_secret(secret) , &Validation::default())
+//}
 
 fn load_credentials() -> Vec<User> {
     let file = fs::read_to_string("credentials.json").unwrap_or_else(|_| "[]".to_string());
@@ -95,8 +95,8 @@ pub async fn register(register_info : web::Json<PairRequest>) -> impl Responder 
         let new_user = User {
         id,
         username: register_info.username.clone(),
-        password: register_info.password.clone(),
-    };
+        password: hash(register_info.password.clone(), DEFAULT_COST).unwrap(),
+        };
     users.push(new_user);
     save_credentials(&users);
     responce = HttpResponse::Ok().body("User registered successfully");
@@ -111,9 +111,9 @@ pub async fn login(login_info : web::Json<LoginRequest>) -> impl Responder {
     let mut result = HttpResponse::Unauthorized().body("Invalid credentials");
     for credentials in users.iter() {
         let username = credentials.username.clone();
-        let password = credentials.password.clone();
+        let password = credentials.password.clone().to_string();
         let id = credentials.id as u8;
-        if login_info.username == username && login_info.password == password {
+        if login_info.username == username && verify(&login_info.password ,password.as_str()).unwrap() {
             let token = create_jwt(&login_info.username , &[id]).unwrap();
             result =  HttpResponse::Ok().json(token);
         }
