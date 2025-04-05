@@ -1,5 +1,5 @@
 use auth::auth::{login , register ,  key_gen};
-use actix_web::{App, HttpRequest, HttpServer, middleware, web};
+use actix_web::{App, HttpServer, middleware, web};
 use env_logger;
 use log;
 use local_ip_address::local_ip;
@@ -18,7 +18,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .service(login)
             .service(register)
-            .service(web::resource("/index.html").to(|| async { "Working?" })) // Remove when testing done
+            .service(web::resource("/index.html").to(|| async { "Works i Guess lol" })) // Remove when testing done
     }).bind(bind_address)?
     .run()
     .await

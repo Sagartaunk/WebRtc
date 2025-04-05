@@ -67,9 +67,9 @@ fn create_jwt(username : &str , secret : &[u8]) -> Result<String> {
     encode(&Header::default() , &claims , &EncodingKey::from_secret(secret) )
 }
 
-//fn verify_jwt(token : &str , secret : &[u8] ) -> Result<TokenData<Claims>> {
-    //decode::<Claims>(token , &DecodingKey::from_secret(secret) , &Validation::default())
-//}
+pub fn verify_jwt(token : &str , secret : &[u8] ) -> Result<TokenData<Claims>> {
+    decode::<Claims>(token , &DecodingKey::from_secret(secret) , &Validation::default())
+}
 
 fn load_credentials() -> Vec<User> {
     let file = fs::read_to_string("credentials.json").unwrap_or_else(|_| "[]".to_string());
@@ -91,7 +91,7 @@ pub async fn register(register_info : web::Json<PairRequest>) -> impl Responder 
     let mut responce = HttpResponse::Unauthorized().body("Invalid pairing Key");
     if key == register_info.key.clone() {
         let mut users = load_credentials(); 
-        let id = rand::rng().random_range(1..=130);
+        let id = 50;
         let new_user = User {
         id,
         username: register_info.username.clone(),
