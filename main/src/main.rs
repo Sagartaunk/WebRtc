@@ -15,10 +15,13 @@ async fn main() -> std::io::Result<()> {
     log::info!("Starting at http://{}", bind_address);
     HttpServer::new(|| {
         App::new()
-            .wrap(middlewarea::Middleware)
             .wrap(middleware::Logger::default())
-            .service(login)
-            .service(register)
+            .service(
+                web::scope("/api")
+                    .wrap(middlewarea::Middleware)
+            )
+            .route("/register", web::post().to(register))
+            .route("/login", web::post().to(login))
             .service(web::resource("/index.html").to(|| async { "Works i Guess lol" })) // Remove when testing done
     }).bind(bind_address)?
     .run()

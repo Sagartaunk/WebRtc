@@ -85,7 +85,7 @@ fn save_credentials(users: &Vec<User>) {
     fs::write("credentials.json", json).expect("Unable to write file");
 }
 
-#[post("/register")]
+
 pub async fn register(register_info : web::Json<PairRequest>) -> impl Responder {
     let key = load_key();
     let mut responce = HttpResponse::Unauthorized().body("Invalid pairing Key");
@@ -105,7 +105,7 @@ pub async fn register(register_info : web::Json<PairRequest>) -> impl Responder 
     responce  
 }
 
-#[post("/login")]
+
 pub async fn login(login_info : web::Json<LoginRequest>) -> impl Responder {
     let users = load_credentials();
     let mut result = HttpResponse::Unauthorized().body("Invalid credentials");
