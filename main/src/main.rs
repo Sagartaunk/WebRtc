@@ -1,4 +1,4 @@
-use auth::auth::{login , register ,  key_gen};
+use auth::auth::{login , register ,  key_gen , middleware::Middleware};
 use actix_web::{App, HttpServer, middleware, web};
 use env_logger;
 use log;
@@ -15,6 +15,7 @@ async fn main() -> std::io::Result<()> {
     log::info!("Starting at http://{}", bind_address);
     HttpServer::new(|| {
         App::new()
+            .wrap(Middleware)
             .wrap(middleware::Logger::default())
             .service(login)
             .service(register)
