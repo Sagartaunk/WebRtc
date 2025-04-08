@@ -4,7 +4,7 @@ use futures::future::{ok, Ready};
 use futures::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use crate::auth::{verify_jwt , Claims};
+use crate::auth::verify_jwt;
 use actix_web::body::BoxBody;
 
 pub struct Middleware;
