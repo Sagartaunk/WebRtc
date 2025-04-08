@@ -19,10 +19,10 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .wrap(middlewarea::Middleware)
+                    .service(web::resource("/test").to(|| async { "Works?" })) //Place Holder to test
             )
             .route("/register", web::post().to(register))
             .route("/login", web::post().to(login))
-            .service(web::resource("/index.html").to(|| async { "Works i Guess lol" })) // Remove when testing done
     }).bind(bind_address)?
     .run()
     .await

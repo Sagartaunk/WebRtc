@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use jsonwebtoken::{encode , decode , Header , Validation , EncodingKey , DecodingKey , errors::Result , TokenData};
 use std::time::{SystemTime , UNIX_EPOCH};
 use std::fs;
-use actix_web::{web , HttpResponse , Responder , post};
+use actix_web::{web , HttpResponse , Responder };
 use rand::Rng;
 use bcrypt::{hash, DEFAULT_COST , verify};
 
