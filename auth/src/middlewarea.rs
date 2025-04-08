@@ -4,18 +4,17 @@ use futures::future::{ok, Ready};
 use futures::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use crate::auth::verify_jwt;
+use crate::auth::{verify_jwt , Claims};
 use actix_web::body::BoxBody;
 
 pub struct Middleware;
 
-impl<S, B> Transform<S, ServiceRequest> for Middleware
+impl<S> Transform<S, ServiceRequest> for Middleware
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = Error>,
     S::Future: 'static,
-    B: 'static, // Ensuring B has a 'static lifetime
 {
-    type Response = ServiceResponse<B>;
+    type Response = ServiceResponse<BoxBody>;
     type Error = Error;
     type InitError = ();
     type Transform = MiddlewareService<S>;
@@ -30,13 +29,12 @@ pub struct MiddlewareService<S> {
     service: S,
 }
 
-impl<S, B> Service<ServiceRequest> for MiddlewareService<S>
+impl<S> Service<ServiceRequest> for MiddlewareService<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = Error>,
     S::Future: 'static,
-    B: 'static,
 {
-    type Response = ServiceResponse<B>;
+    type Response = ServiceResponse<BoxBody>;
     type Error = Error;
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
@@ -52,9 +50,9 @@ where
             .map(|header| header.trim_start_matches("Bearer "))
             .unwrap_or("");
 
-        let secret = 50 as u8; // Correct secret key definition
+        let secret = 50 as u8;
         let validation = verify_jwt(token, &[secret]);
-        
+
         if validation.is_ok() {
             let fut = self.service.call(req);
             Box::pin(async move {
@@ -62,11 +60,10 @@ where
                 Ok(res)
             })
         } else {
-            // Return 401 Unauthorized with a static message if the token is invalid
             let response = HttpResponse::Unauthorized()
                 .content_type("text/plain")
                 .body("Access denied: Unauthorized request");
-            Box::pin(async move { Ok(req.into_response(response.map_into_boxed_body())) }) // Ensuring the response type matches
+            Box::pin(async move { Ok(req.into_response(response.map_into_boxed_body())) })
         }
     }
 }

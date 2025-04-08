@@ -17,7 +17,7 @@ struct User {
 
 
 #[derive(Debug , Serialize , Deserialize)]
-struct Claims {
+pub struct Claims {
     sub : String,
     exp : usize
 }
