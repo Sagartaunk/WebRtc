@@ -1,4 +1,4 @@
-use auth::{middlewarea , auth::{login , register ,  key_gen}};
+use auth::{ServerMiddleware , auth::{login , register ,  key_gen}};
 use actix_web::{App, HttpServer, middleware, web};
 use env_logger;
 use log;
@@ -18,7 +18,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .service(
                 web::scope("/api")
-                    .wrap(middlewarea::Middleware)
+                    .wrap(ServerMiddleware::Middleware)
                     .service(web::resource("/test").to(|| async { "Works?" })) //Place Holder to test
             )
             .route("/register", web::post().to(register))
