@@ -8,6 +8,13 @@ use bcrypt::{hash, DEFAULT_COST , verify};
 
 
 
+pub fn credentials_gen(){
+    let _ = match fs::File::open("crdentials.json"){
+        Ok(_) => {},
+        Err(_) => {let _ = fs::File::create("credentials.json");}
+    };
+}
+
 #[derive(Debug , Clone , Serialize , Deserialize)]
 struct User {
     id : i32,
@@ -95,7 +102,7 @@ pub async fn register(register_info : web::Json<PairRequest>) -> impl Responder 
         let new_user = User {
         id,
         username: register_info.username.clone(),
-        password: hash(register_info.password.clone(), DEFAULT_COST).unwrap(),
+        password: hash(register_info.password.clone(), DEFAULT_COST).unwrap() ,
         };
     users.push(new_user);
     save_credentials(&users);

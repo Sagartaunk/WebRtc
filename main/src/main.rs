@@ -1,4 +1,4 @@
-use auth::{ServerMiddleware , auth::{login , register ,  key_gen}};
+use auth::{ServerMiddleware , auth::{login , register ,  key_gen , credentials_gen}};
 use actix_web::{App, HttpServer, middleware, web};
 use env_logger;
 use log;
@@ -9,6 +9,7 @@ use local_ip_address::local_ip;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     key_gen();
+    credentials_gen();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     let device_ip = local_ip().unwrap();
     let bind_address = format!("{}:6969", device_ip);
