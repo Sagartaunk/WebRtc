@@ -8,10 +8,10 @@ use bcrypt::{hash, DEFAULT_COST , verify};
 
 
 
-pub fn credentials_gen(){
-    let _ = match fs::File::open("crdentials.json"){
+pub fn file_gen(path : String){
+    let _ = match fs::File::open(path.clone()){
         Ok(_) => {},
-        Err(_) => {let _ = fs::File::create("credentials.json");}
+        Err(_) => {let _ = fs::File::create(path);}
     };
 }
 
@@ -43,8 +43,12 @@ pub struct LoginRequest {
 }
 
 pub fn load_key() -> String{
-    let key  = match fs::read_to_string("Key.txt"){
-        Ok(key) => key ,
+    let _ = match fs::File::open("key.txt") {
+        Ok (_) => {},
+        Err(_) => {file_gen(String::from("key.txt"));}
+    };
+    let key = match fs::read_to_string("key.txt"){
+        Ok(key) => key,
         Err(_) => {
             let key = key_gen();
             key
