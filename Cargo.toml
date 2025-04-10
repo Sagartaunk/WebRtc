@@ -1,5 +1,5 @@
 [workspace]
-members = [ "auth","main"]
+members = [ "auth", "handlers","main"]
 
 
 resolver = "3"
