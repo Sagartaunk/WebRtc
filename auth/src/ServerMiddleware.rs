@@ -29,6 +29,7 @@ pub struct MiddlewareService<S> {
     service: S,
 }
 
+
 impl<S> Service<ServiceRequest> for MiddlewareService<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = Error>,
